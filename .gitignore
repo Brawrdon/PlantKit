@@ -33,3 +33,9 @@
 
 # macOS
 .DS_Store
+
+# PlatformIO
+.pio/
+
+# Visual Studio Code
+.vscode/
