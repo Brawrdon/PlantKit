@@ -3,6 +3,7 @@
 #include <WebServer.h>
 #include <AutoConnect.h>
 #include <ESP32HomeKit.h>
+#include "Sensors.h"
 
 WebServer server; 
 
@@ -104,6 +105,8 @@ static int fan_write(hap_write_data_t write_data[], int count, void *serv_priv, 
 void setup(){
 	delay(1000);
 	Serial.begin(115200);
+
+    initiateSensors();
 	// Portal config
 	config.apid = "PlantKit";
 	config.psk = "plantparty";
