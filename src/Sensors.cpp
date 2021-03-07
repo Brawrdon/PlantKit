@@ -1,6 +1,6 @@
 #include "Sensors.h"
 
-Adafruit_AHTX0 temperatureSensor;
+Adafruit_AHTX0 aht;
 
 bool initiateSensors() {
     Serial.println("\n== [Connecting to sensors] ==\n");
@@ -9,7 +9,7 @@ bool initiateSensors() {
 
     while (!is_aht20_connected)
     {
-        is_aht20_connected = temperatureSensor.begin();
+        is_aht20_connected = aht.begin();
         Serial.println(is_aht20_connected ? "AHT20 connection successful." : "AHT20 connection failed.");
 
         if(!is_aht20_connected) 
@@ -20,4 +20,17 @@ bool initiateSensors() {
     }
 
     return true;
+}
+
+ahtReading getAhtReading() {
+    // TODO: Add a check to see if the sensor is still connected
+    sensors_event_t humidity, temp;
+    aht.getEvent(&humidity, &temp); // populate temp and humidity objects with fresh data
+    ahtReading reading = {
+        .temperature = temp.temperature,
+        .humidty = humidity.relative_humidity
+    };
+
+
+    return reading;
 }
