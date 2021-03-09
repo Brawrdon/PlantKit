@@ -3,6 +3,7 @@
 struct ahtReading {
     float temperature;
     float humidty;
+    bool success;
 };
 
 bool initiateSensors();

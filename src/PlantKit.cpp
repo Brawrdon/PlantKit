@@ -13,17 +13,43 @@ AutoConnectConfig config;
 hap_serv_t *service;
 bool hapStarted = false;
 
+TaskHandle_t Task1;
+TaskHandle_t Task2;
+
 /* Mandatory identify routine for the accessory.
  * In a real accessory, something like LED blink should be implemented
  * got visual identification
  */
-static int identify(hap_acc_t *ha)
-{
+static int identify(hap_acc_t *ha) {
 	ESP_LOGI(TAG, "Accessory identified");
 	return HAP_SUCCESS;
 }
 
-void setup(){
+void portalTask(void *pvParameters) {
+	while (true) {
+		portal.handleClient();
+	}
+}
+
+void sensorsTask(void *pvParameters) {
+
+	while (hapStarted) {
+		vTaskDelay(5000 / portTICK_PERIOD_MS);
+		hap_char_t *temp = hap_serv_get_char_by_uuid(service, HAP_CHAR_UUID_CURRENT_TEMPERATURE);
+		ahtReading reading = getAhtReading();
+
+		if (reading.success != true)
+			continue;
+
+		hap_val_t value = {
+			.f = reading.temperature
+		};
+
+		hap_char_update_val(temp, &value);
+	}
+}
+
+void setup() {
 	delay(1000);
 	Serial.begin(115200);
 
@@ -89,7 +115,6 @@ void setup(){
 	/* Query the controller count (just for information) */
 	ESP_LOGI(TAG, "Accessory is paired with %d controllers", hap_get_paired_controller_count());
 
-
 	/* Hardware initialisation */
     initiateSensors();
 
@@ -101,23 +126,9 @@ void setup(){
 	/* After all the initialisations are done, start the HAP core */
 	if(hap_start() == HAP_SUCCESS)
 		hapStarted = true;
-	
+
+	xTaskCreatePinnedToCore(portalTask, "Portal", 1000, NULL, 1, &Task1, 1);
+	xTaskCreatePinnedToCore(sensorsTask, "Sensors", 1000, NULL, 1, &Task2, 0);
 }
 
-void loop() {
-	// TODO: Run portal on a separate thread so delay doesn't impact setup
-	portal.handleClient();
-
-	if (hapStarted) {
-		delay(5000);
-		hap_char_t *temp = hap_serv_get_char_by_uuid(service, HAP_CHAR_UUID_CURRENT_TEMPERATURE);
-		ahtReading reading = getAhtReading();
-		hap_val_t value = {
-			.f = reading.temperature
-		};
-
-		hap_char_update_val(temp, &value);
-	}
-
-	// TODO: Add proper logging for debugging
-}
+void loop() { }
